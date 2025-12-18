@@ -54,6 +54,8 @@ body{
 
 /* ===== Login unten links ===== */
 .loginDock{
+  max-height: calc(100vh - 36px);
+  overflow: auto;
   position:fixed;
   left:18px;
   bottom:18px;
@@ -124,6 +126,7 @@ kbd{
 
 @media (max-width:520px){
   .header{
+    z-index: 10;
     left:50%;
     transform:translateX(-50%);
     right:auto;
@@ -132,6 +135,7 @@ kbd{
 
   /* Login unten links (auch mobil) */
   .loginDock{
+    z-index: 20;
     left:16px;
     bottom:16px;
     transform:none;
@@ -148,6 +152,13 @@ kbd{
   }
 }
 
+.installHint{
+  padding:12px 14px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--line);
+  color:var(--muted);
+}
 
 </style>
 </head>
@@ -173,12 +184,20 @@ kbd{
 </div>
 
   <div class="loginDock">
+    <div class="installHint" id="installHint" style="display:none;">
+    <b style="color:var(--text)">Als App installieren:</b>
+    <div style="margin-top:6px;line-height:1.35">
+      <div><b>Android (Chrome):</b> Menü ⋮ → <i>„App installieren“</i> / <i>„Zum Startbildschirm“</i></div>
+      <div><b>iPhone (Safari):</b> Teilen ⤴ → <i>„Zum Home-Bildschirm“</i></div>
+    </div>
+  </div>
+
     <div class="row">
       <input type="password" id="pw" placeholder="Passwort" autocomplete="current-password">
       <button id="goBtn" type="button">Öffnen</button>
     </div>
 
-    <div class="error" id="err">❌ Falsches Passwort</div>
+  <div class="error" id="err">❌ Falsches Passwort</div>
 
     <div class="hint">
       Tipp: Mit <kbd>Enter</kbd> bestätigen. (Groß-/Kleinschreibung beachten)
@@ -239,13 +258,13 @@ if ("serviceWorker" in navigator) {
   const hint = document.getElementById("installHint");
   if(!hint) return;
 
-  // Wenn schon als App gestartet (standalone), keinen Hinweis zeigen
-  const isStandalone = window.matchMedia("(display-mode: standalone)").matches
-    || window.navigator.standalone === true; // iOS Safari
+  // Wenn als App gestartet: keinen Hinweis
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true; // iOS Safari
 
   if (isStandalone) return;
 
-  // Install-Hinweis zeigen
   hint.style.display = "block";
 })();
 </script>
