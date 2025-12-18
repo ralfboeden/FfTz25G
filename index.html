@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Online-Fotobuch 2000–2025</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0d12">
+
+<style>
+:root{
+  --bg:#0b0d12;--card:#121622;--card2:#0f1320;--text:#e9ecf1;--muted:#aab2c0;
+  --line:rgba(255,255,255,.1);--r:18px;
+}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1100px;margin:auto;padding:20px}
+h1{margin:0 0 6px;font-size:22px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+
+.grid{display:grid;gap:14px;grid-template-columns:repeat(5,1fr)}
+@media(max-width:900px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  border:1px solid var(--line);border-radius:var(--r);
+  padding:14px;cursor:pointer;display:flex;flex-direction:column
+}
+.card:hover{border-color:rgba(255,255,255,.25)}
+.year{font-size:22px;font-weight:800}
+.age{font-size:13px;color:var(--muted)}
+.tags{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
+
+/* Overlay muss selbst scrollen können (sonst scrollt der Hintergrund) */
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  justify-content:center;
+  align-items:flex-start;
+  padding:20px;
+
+  overflow-y:auto;                 /* ✅ wichtig */
+  -webkit-overflow-scrolling:touch;/* ✅ iOS/Android smooth */
+}
+
+.overlay.show{display:flex}
+
+/* ===== Swipe Lightbox ===== */
+.lbWrap{
+  position:relative;
+  padding:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#lbImg{
+  width:100%;
+  max-height:75vh;
+  object-fit:contain;
+  border-radius:16px;
+  border:1px solid var(--line);
+}
+
+/* Navigation */
+.nav{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(0,0,0,.45);
+  color:#fff;
+  border:none;
+  font-size:36px;
+  padding:6px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  user-select:none;
+}
+.nav:hover{background:rgba(0,0,0,.65)}
+.nav.prev{left:10px}
+.nav.next{right:10px}
+
+/* Mobile: Buttons kleiner */
+@media(max-width:520px){
+  .nav{font-size:28px;padding:4px 10px}
+}
+
+/* Panel darf nicht höher als der Viewport werden */
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:20px;
+  max-width:980px;
+  width:100%;
+  overflow:hidden;
+
+  max-height:calc(100vh - 40px);   /* ✅ wichtig */
+  display:flex;                    /* ✅ wichtig */
+  flex-direction:column;           /* ✅ wichtig */
+}
+
+/* Der eigentliche Content-Bereich muss scrollen dürfen */
+.spread{
+  display:grid;
+  grid-template-columns:1fr;
+  flex:1;                          /* ✅ wichtig */
+  min-height:0;                    /* ✅ wichtig */
+  overflow:auto;                   /* ✅ wichtig */
+  -webkit-overflow-scrolling:touch;
+}
+
+@media(max-width:860px){
+  .spread{grid-template-columns:1fr}
+}
+
+.top{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}
+.close{cursor:pointer;color:var(--muted);user-select:none}
+
+.catbar{
+  display:flex;flex-wrap:wrap;gap:8px;
+  padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card2)
+}
+.catbtn{
+  border:1px solid var(--line);background:rgba(255,255,255,.04);
+  color:var(--text);border-radius:999px;padding:8px 10px;cursor:pointer;
+  font-size:13px;display:flex;gap:8px;align-items:center
+}
+.catbtn:hover{background:rgba(255,255,255,.06)}
+.catbtn.active{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.08)}
+.small{color:var(--muted);font-size:12px}
+
+.page{padding:16px}
+.page h2{margin-top:0}
+
+ul{padding-left:18px;margin:0}
+li{margin:8px 0}
+
+/* Bilder-Galerie (für Ganz privat/Family & Friends/Freizeit) */
+.gallery{
+  display:grid;
+  gap:14px;
+  grid-template-columns:1fr;  /* ✅ große Darstellung */
+}
+@media(max-width:520px){.gallery{grid-template-columns:1fr}}
+.gimg{
+  border:1px solid var(--line);
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(0,0,0,.15);
+}
+.gimg img{
+  width:100%;
+  height:auto;
+  display:block;
+}
+.cap{padding:8px 10px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
+.note{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.4}
+
+/* Film/Musik: Links links, Cover rechts */
+.mediaRow{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+}
+
+.mediaLinks{
+  flex:1;
+  min-width:0;
+}
+
+.mediaCover{
+  width:min(320px, 42%);
+  flex:0 0 auto;
+}
+
+.mediaCover img{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius:16px;
+  border:1px solid var(--line);
+}
+
+/* Mobil: untereinander */
+@media(max-width:720px){
+  .mediaRow{flex-direction:column}
+  .mediaCover{width:100%}
+}
+
+/* Mini-Icons im Overview */
+.miniIcon{
+  font-size:14px;
+  margin-left:6px;
+  opacity:.75;
+}
+
+/* Klickbare Mini-Icons im Overview */
+.miniIcon{
+  font-size:14px;
+  margin-left:6px;
+  opacity:.78;
+  cursor:pointer;
+  user-select:none;
+}
+.miniIcon:hover{opacity:1}
+
+/* Kategorie-Buttons: Content vorhanden → dezent hervorheben */
+.catbtn.hasContent{
+  border-color:rgba(255,255,255,.35);
+  background:rgba(255,255,255,.10);
+}
+
+/* Kleiner Content-Indikator rechts im Button */
+.catbtn .availDot{
+  margin-left:6px;
+  font-size:12px;
+  opacity:.7;
+}
+
+/* Wenn ein Bild nicht existiert: zeigen wir statt kaputtem Bild eine neutrale Box */
+.missing{
+  aspect-ratio:4/3;
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,.55);
+  background:rgba(255,255,255,.03);
+  border-radius:16px;
+  border:1px dashed rgba(255,255,255,.22);
+  padding:10px;
+  text-align:center;
+}
+
+a.link{color:var(--text);text-decoration:none;border-bottom:1px dotted rgba(255,255,255,.35)}
+a.link:hover{border-bottom-color:rgba(255,255,255,.7)}
+.badge{display:inline-block;margin-left:6px;font-size:11px;color:var(--muted);border:1px solid var(--line);padding:2px 8px;border-radius:999px}
+code{color:var(--muted)}
+
+.qr-section{
+  display:flex;
+  gap:18px;
+  justify-content:flex-end;
+}
+
+.qr-item{
+  text-align:center;
+}
+
+.qr-img{
+  width:110px;
+  height:110px;
+  image-rendering:pixelated;
+}
+
+.qr-label{
+  margin-top:6px;
+  font-size:0.85em;
+  color:var(--muted);
+}
+
+</style>
+</head>
+
+<script>
+if(localStorage.getItem("fotobuch_access") !== "ok"){
+  window.location.href = "login.html";
+}
+</script>
+
+<body>
+<script>
+if (localStorage.getItem("fotobuch_access") !== "ok") {
+  window.location.replace("login.html");
+}
+</script>
+
+<div class="wrap">
+  <h2>Dein Online-Fotobuch</h2>
+  
+<section style="margin-bottom:24px">
+  <h1 style="margin-bottom:6px">Willkommen</h1>
+  <p style="color:#aab2c0;max-width:700px">
+    Du hast schon viel erlebt in diesen Jahren, kleine Ausschnitte davon soll Dir dieses Buch zeigen.
+    <br><br>
+    Viel Freude beim Stöbern.
+  </p>
+</section>
+
+  <section class="grid" id="grid"></section>
+</div>
+
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="panel" role="dialog" aria-label="Jahresseite">
+    <div class="top">
+      <div>
+        <div id="oYear" style="font-size:20px;font-weight:800"></div>
+
+      </div>
+      <div class="close" onclick="closeO()">Schließen ✕</div>
+    </div>
+
+    <!-- Nur diese Icons (Geburtstag/Urlaub sind entfernt) -->
+    <div class="catbar" id="catbar">
+      <button class="catbtn" data-cat="overview" type="button">📌 Was war da los?</button>
+      <button class="catbtn" data-cat="personal" type="button">🧍 Ganz privat</button>
+      <button class="catbtn" data-cat="family" type="button">👨‍👩‍👦 Family & Friends</button>
+      <button class="catbtn" data-cat="sport" type="button">🏀⚽ Freizeit</button>
+      <button class="catbtn" data-cat="film" type="button">🎬 Film/Serie</button>
+      <button class="catbtn" data-cat="music" type="button">🎵 Musik</button>
+    </div>
+
+    <div class="spread">
+      <div class="page">
+        <h2 id="leftTitle">Inhalt</h2>
+        <div id="content"></div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<script>
+const birthYear = 2000;
+
+/* ===========================
+   HIGHLIGHTS (Text & Links)
+   =========================== */
+const highlights = {
+  2000:{personalText:"Die ersten Aufnahmen",familyText:"Erste Familienmomente.",sportText:"schon früh aktiv",filmText:"Thomas, die kleine Lokomotive & seine Freunde",musicText:"Detlev Jöcker – Hallo, kleiner Eisbär", filmLinks:[{label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Serie/Thomas-und-Friends"}], musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/intl-de/track/4K5nJ7QIFJgaBQs5dCQTP3"}]},
+  2001:{personalText:"schon so fotogen",familyText:"Portrait mit Opas",sportText:"Wintersport und mehr",filmText:"Bob der Baumeister",musicText:"Rolf Zuckowski – In der Weihnachtsbäckerei",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Serie/Bob-the-Builder"}],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/intl-de/track/6WY0MrAoU5rTFon6b7GdRH"}]},
+  2002:{personalText:"Naturbursche mit gutem Appetit",familyText:"Müll- und Matschhose stehen Dir gut",sportText:"Bagger, bagger, kipp, kipp",filmText:"Pippi Langstrumpf (Serie)",musicText:"Pippi Langstrumpf – Hei, Pippi Langstrumpf (Titelsong)",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Serie/Pippi-Langstrumpf" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/intl-de/track/26fgjuaj7Vs4aRUZ60cuQP" }]},
+  2003:{personalText:"Ab in den Kindergarten",familyText:"kleine Schwester fest im Griff",sportText:"Der kleine Entdecker",filmText:"Der König der Löwen (1994)",musicText:"Carmen Twillie, Lebo M. – Circle of Life",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Der-Koenig-der-Loewen" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/0HU5JnVaKNTWf6GykV9Zn8" }]},
+  2004:{personalText:"So ein lieber Junge :-)",familyText:"Großartiges Tier",sportText:"Grünkohl gibt Kraft zum Toben",filmText:"Findet Nemo",musicText:"Koji Kondo – Super Mario Bros. Main Theme",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Findet-Nemo-3D" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/03fijJ2GEzZ92Zl5fuTxI7" }]},
+  2005:{personalText:"kleiner Träumer",familyText:"Hand in Hand durch Norddeutschland",sportText:"immer aktiv",filmText:"Die Monster AG",musicText:"Red Hot Chili Peppers – By the Way",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Die-Monster-AG" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/intl-de/track/1f2V8U1BiWaC9aJWmpOARe" }]},
+  2006:{personalText:"keine Angst vor großen Tieren",familyText:"frisch geschlüpft",sportText:"Ausflüge machen manchmal müde",filmText:"Deutschland. Ein Sommermärchen",musicText:"Herbert Grönemeyer – Zeit, dass sich was dreht",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Deutschland-Ein-Sommermaerchen" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/3h1Z6n3pV3yN2vZ6nYbK9J" }]},
+  2007:{personalText:"Viel Spaß beim Spielen",familyText:"schöne Zeit in Schloss Dankern",sportText:"schon früh hoch hinaus",filmText:"Die Unglaublichen",musicText:"Red Hot Chili Peppers – Can't Stop",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Die-Unglaublichen" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/3ZOEytgrvLwQaqXreDs2Jx" }]},
+  2008:{personalText:"Hamburg, meine Perle",familyText:"lieber großer Bruder",sportText:"erste Fussballerfolge",filmText:"Miss Marple – 16:50 ab Paddington",musicText:"Peter Fox – Schwarz zu Blau",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/16-50-ab-Paddington" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/6w3f9x8l0qzJ5Z3Z0J1ZkH" }]},
+  2009:{personalText:"Lego and Chill",familyText:"alles Harzer hier",sportText:"viel Spaß unterwegs",filmText:"Die Simpsons – Der Film",musicText:"Black Eyed Peas – Boom Boom Pow",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Die-Simpsons-Der-Film" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/3opVsyWVYEAF6ZKJv1s9G5" }]},
+  2010:{personalText:"Tjarki auf hoher See",familyText:"Hauptsache gut gekleidet",sportText:"Sommerspaß in Krautheim",filmText:"Harry Potter und der Gefangene von Askaban",musicText:"LMFAO – Sexy And I Know It",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Harry-Potter-und-der-Gefangene-von-Askaban" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/1kYpU3dQBKxQKZK6Qw5KzR" }]},
+  2011:{personalText:"It's cool, man!",familyText:"Zu Wasser und in der Luft unterwegs",sportText:"alles nur Show",filmText:"Scrubs – Die Anfänger",musicText:"Taio Cruz – Dynamite",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Serie/Scrubs" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/4TCL0xEJHcZ0mR9Gkqg1fS" }]},
+  2012:{personalText:"Ein ausgeschlafenes Kerlchen",familyText:"Klimahaus und N-Joy-Party",sportText:"Erst die Pflicht und dann die Kür",filmText:"Terminator",musicText:"Macklemore & Ryan Lewis – Thrift Shop",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Terminator" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/6Tt3vZ8oH5w1w5Z1g7P6jM" }]},
+  2013:{personalText:"Mir stehen die Haare zu Berge",familyText:"Erlebnisse.",sportText:"Chillen mit Musik", filmText:"Der Herr der Ringe – Die Gefährten",musicText:"David Guetta feat. Ne-Yo & Akon – Play Hard",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Der-Herr-der-Ringe-Die-Gefaehrten" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/2vC7bZs5p7l6qZ0f8Y4pWZ" }]},
+  2014:{personalText:"Über den Dächern von Berlin",familyText:"Viel Familienzeit",sportText:"daddeln und betüddeln", filmText:"Ich – Einfach unverbesserlich",musicText:"OutKast – Hey Ya!",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Ich-Einfach-unverbesserlich" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/3AszgPDZd9q0DpJ7Zs8l8b" }]},
+  2015:{personalText:"Cooler Typ?",familyText:"Auf den Hund gekommen?",sportText:"Basketball ist cool!", filmText:"Two and a Half Men",musicText:"Eminem – Rap God",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Serie/Two-and-a-Half-Men" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/6or1bKJiZ06IlK0vFvY75k" }]},
+  2016:{personalText:"Seehr cooler Typ!",familyText:"Meine 'große' Schwester",sportText:"Alles dreht sich um den 🏀",filmText:"Kindsköpfe",musicText:"Drake & Future – Jumpman",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Kindsk%C3%B6pfe" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/0XUfyU2QviPAs6bxSpXYG4" }]},
+  2017:{personalText:"Bella Italia in 'Caddenabia'",familyText:"Milano e Fiume Latte",sportText:"Alles dreht sich um den 🏀, Teil II",filmText:"Zodiac",musicText:"Lil Wayne, Wiz Khalifa & Imagine Dragons – Sucker for Pain",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Zodiac" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/1xznGGDReH1oQq0xzbwXa3" }]},
+  2018:{personalText:"Alles dreht sich um den 🏀, Teil III",familyText:"Party, party, party!",sportText:"Alles dreht sich um den 🏀, Teil IV",filmText:"Insidious",musicText:"Xzibit – X",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Insidious" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/4D1D0xY7w8KJvFJ0u2e2iM" }]},
+  2019:{personalText:"Alles meins?",familyText:"Zu Hause und unterwegs",sportText:"Hier spielt die Musik!", filmText:"NBA Live & Streaming",musicText:"Tool – Forty Six & 2",filmLinks:[{ label:"Streaming (NBA League Pass)", url:"https://www.nba.com/watch/league-pass" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/1cZc4y1sE8YH2g9Z6kzW1N" }]},
+  2020:{personalText:"Es steht Dir ins Gesicht geschrieben",familyText:"Tjarki und die lieben Kleinen",sportText:"🏀🏀🏀",filmText:"Der Rausch",  musicText:"Rammstein – Sonne",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Der-Rausch" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/3dYq1xk7G1sN2ZqH1Z3y1N" }]},
+  2021:{personalText:"Tjarki und die Süssen",familyText:"Gemeinsame Momente.",sportText:"Voll in Fahrt!",filmText:"Don't Look Up",musicText:"The White Stripes – Seven Nation Army",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Dont-Look-Up" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/3dPQuX8Gs42Y7b454ybpMR" }]},
+  2022:{personalText:"Coole Styles",familyText:"Dieses Jahr gibt's viel zu feiern",sportText:"Große Momente ;-)",filmText:"Avatar: The Way of Water",musicText:"Queen – Bohemian Rhapsody",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Avatar-The-Way-of-Water" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/7tFiyTwD0nx5a1eklYtX2J" }]},
+  2023:{personalText:"Ein ganz ein Süsser!",familyText:"Glücklich in den Bergen",sportText:"Meer und mehr erleben",filmText:"Air – Der große Wurf",musicText:"Journey – Don't Stop Believin'",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Air-Der-grosse-Wurf" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/77NNZQSqzLNqh2A9JhLRkg" }]},
+  2024:{personalText:"Stabil & fokussiert.",familyText:"Gemeinsame Zeit.",sportText:"NBA weiterhin fester Fokus", filmText:"Stromberg – Der Film",musicText:"Foo Fighters – Everlong",filmLinks:[{ label:"Streaming (JustWatch)", url:"https://www.justwatch.com/de/Film/Stromberg-Der-Film" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/5UWwZ5lm5PKu6eKsHAGxOk" }]},
+  2025:{personalText:"24 Jahre – Rückblick & Ausblick.",familyText:"Familienmomente sammeln.",sportText:"NBA & Rückblick",filmText:"Basketball-EM 2025 (FIBA EuroBasket)",musicText:"Radiohead – Creep",filmLinks:[{ label:"Schwarz. Rot. GOLD! Der Film zum EM-Titel", url:"https://www.youtube.com/watch?v=h-sxjK2GaUI25" }],musicLinks:[{ label:"Spotify", url:"https://open.spotify.com/track/70LcF31zb1H0PyJoS1Sx1r" }]}
+};
+
+function addQrCodesToTimeline(timeline){
+  const out = {};
+  for (const [year, obj] of Object.entries(timeline)) {
+    out[year] = {
+      ...obj,
+      qrCodes: {
+        film:  { src: `img/qr-codes/${year}_film_qr.png`,  label: "🎬 Film ansehen / Infos" },
+        music: { src: `img/qr-codes/${year}_music_qr.png`, label: "🎵 Song anhören" }
+      }
+    };
+  }
+  return out;
+}
+
+/* ==========================================
+   BILD-PLATZHALTER (für 2000–2025, 3 Tabs)
+   ==========================================
+   Wir tragen für JEDES Jahr automatisch je Kategorie 2 Platzhalter ein:
+   - img/YYYY/personal/personal_01.jpg, personal_02.jpg
+   - img/YYYY/family/family_01.jpg, family_02.jpg
+   - img/YYYY/sport/sport_01.jpg, sport_02.jpg
+*/
+function placeholders(year){
+  return {
+    personalImages: [
+      { src:`img/${year}/personal/personal_01.jpg`, caption:`${year} – Ganz privat (Bild 1)` },
+      { src:`img/${year}/personal/personal_02.jpg`, caption:`${year} – Ganz privat (Bild 2)` }
+    ],
+    familyImages: [
+      { src:`img/${year}/family/family_01.jpg`, caption:`${year} – Family & Friends (Bild 1)` },
+      { src:`img/${year}/family/family_02.jpg`, caption:`${year} – Family & Friends (Bild 2)` }
+    ],
+    sportImages: [
+      { src:`img/${year}/sport/sport_01.jpg`, caption:`${year} – Freizeit (Bild 1)` },
+      { src:`img/${year}/sport/sport_02.jpg`, caption:`${year} – Freizeit (Bild 2)` }
+    ],
+  };
+}
+
+/* ===========================
+   DATA JE JAHR ZUSAMMENBAUEN
+   =========================== */
+const data = {};
+for(let y=2000;y<=2025;y++){
+  const h = highlights[y] || {};
+  const p = placeholders(y);
+
+  data[y] = {
+    personalText: h.personalText || "—",
+    familyText: h.familyText || "—",
+    sportText: h.sportText || "—",
+    filmText: h.filmText || "—",
+    musicText: h.musicText || "—",
+    filmLinks: h.filmLinks || [],
+    musicLinks: h.musicLinks || [],
+    personalImages: p.personalImages,
+    familyImages: p.familyImages,
+    sportImages: p.sportImages,
+
+    // ✅ NEU: QR-Codes (automatisch für jedes Jahr)
+    qrCodes:{
+      film:{
+        src:`img/qr-codes/${y}_film_qr.png`,
+        label:"🎬 Film ansehen / Infos"
+      },
+      music:{
+        src:`img/qr-codes/${y}_music_qr.png`,
+        label:"🎵 Song anhören"
+      }
+    }
+  };
+}
+
+/* ✅ 2009: Deine zwei Bilder sind bereits bekannt. Wenn du sie (wie empfohlen) umbenennst,
+   dann werden sie automatisch als family_01.jpg / family_02.jpg im Ordner img/2009/family/ geladen.
+   Falls du sie vorerst im Hauptordner lässt, kannst du stattdessen diese beiden Zeilen aktivieren:
+
+   data[2009].familyImages = [
+     { src:"Urlaub 2009 041.jpg", caption:"2009 – Familienmoment (Bild 1)" },
+     { src:"Urlaub 2009 174.jpg", caption:"2009 – Familienmoment (Bild 2)" }
+   ];
+*/
+
+/* ===========================
+   UI-LOGIK
+   =========================== */
+const grid = document.getElementById("grid");
+const overlay = document.getElementById("overlay");
+const oYear = document.getElementById("oYear");
+
+const content = document.getElementById("content");
+const leftTitle = document.getElementById("leftTitle");
+let currentYear = 2000;
+
+for(let y=2000;y<=2025;y++){
+  const age = Math.max(0, y - birthYear);
+  const c = document.createElement("div");
+  c.className="card";
+
+  // ✅ Kachel: nur Jahr anzeigen
+  c.innerHTML = `<div class="year">${y}</div>`;
+
+  c.onclick = () => openO(y, age);
+  grid.appendChild(c);
+}
+
+
+function openO(year, age){
+  currentYear = year;
+  oYear.textContent = year;
+
+  overlay.classList.add("show");
+  document.body.style.overflow = "hidden";  // ✅ Hintergrund nicht mehr scrollbar
+  overlay.setAttribute("aria-hidden","false");
+  setActiveCat("overview");
+  renderCategory("overview");
+   // ✅ Content-Verfügbarkeit prüfen und Buttons markieren
+  getAvailability(currentYear, data[currentYear] || {}).then(av=>{
+    window.__avail = av;            // merken für Overview-Icons
+    applyAvailabilityToButtons(av); // Buttons: Punkt + Highlight
+    // Falls Overview gerade angezeigt wird: Icons nachladen
+    if(document.querySelector('.catbtn.active')?.dataset.cat === "overview"){
+      renderOverviewIcons(av);
+    }
+  });
+  
+}
+function closeO(){
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden","true");
+  document.body.style.overflow = "";        // ✅ wieder freigeben
+}
+
+function setActiveCat(cat){
+  document.querySelectorAll(".catbtn").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.cat === cat);
+  });
+}
+
+function gotoCat(cat){
+  setActiveCat(cat);
+  renderCategory(cat);
+}
+
+function renderOverviewIcons(av){
+  const filmEl  = document.getElementById("ovFilmIcon");
+  const musicEl = document.getElementById("ovMusicIcon");
+  if(!filmEl || !musicEl) return;
+
+  if(av?.film){
+    filmEl.style.display = "";
+    filmEl.onclick = () => gotoCat("film");
+  }else{
+    filmEl.style.display = "none";
+    filmEl.onclick = null;
+  }
+
+  if(av?.music){
+    musicEl.style.display = "";
+    musicEl.onclick = () => gotoCat("music");
+  }else{
+    musicEl.style.display = "none";
+    musicEl.onclick = null;
+  }
+}
+
+document.getElementById("catbar").addEventListener("click",(e)=>{
+  const btn = e.target.closest(".catbtn");
+  if(!btn) return;
+  const cat = btn.dataset.cat;
+  setActiveCat(cat);
+  renderCategory(cat);
+});
+
+let currentGalleryImages = [];
+let lbImages = [];
+let lbIndex = 0;
+
+const lightbox = document.getElementById("lightbox");
+const lbImg = document.getElementById("lbImg");
+const lbCap = document.getElementById("lbCap");
+
+
+function renderGallery(title, text, images){
+  currentGalleryImages = images;
+  leftTitle.textContent = title;
+
+  // Wir rendern die 2 Platzhalter immer – wenn Datei fehlt, ersetzen wir sie (onerror) durch .missing-Box
+  content.innerHTML = `
+    <div class="note"><b>${title}-Highlight:</b> ${text || "—"}</div>
+    <div class="gallery">
+      ${images.map((x,i) =>`
+        <div class="gimg">
+        <img src="${x.src}"
+          alt="${(x.caption||title).replace(/"/g,"&quot;")}"
+          onclick="openLBFromGallery(${i})"
+          onerror="this.outerHTML='<div class=&quot;missing&quot;>📷 noch kein Bild vorhanden 📷</div>'"
+        >
+        <div class="cap">${x.caption || ""}</div>
+      </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderLinks(title, text, links){
+  leftTitle.textContent = title;
+  if(!links || links.length === 0){
+    content.innerHTML = `
+      <p><b>${title}:</b> ${text || "—"}</p>
+      <p class="note">Für dieses Jahr sind noch keine Links hinterlegt.</p>
+    `;
+    return;
+  }
+  content.innerHTML = `
+    <p><b>${title}:</b> ${text || "—"}</p>
+    <ul>
+      ${links.map(l=>`
+        <li>
+          <a class="link" href="${l.url}" target="_blank" rel="noopener noreferrer">${l.label}</a>
+          <span class="badge">öffnet extern</span>
+        </li>
+      `).join("")}
+    </ul>
+    <div class="note">Hinweis: Links öffnen in einem neuen Tab.</div>
+  `;
+}
+function renderMediaLinks(title, text, links, coverSrc, coverAlt){
+  leftTitle.textContent = title;
+
+  const linksHtml = (!links || links.length === 0)
+    ? `<p class="note">Für dieses Jahr sind noch keine Links hinterlegt.</p>`
+    : `
+      <ul>
+        ${links.map(l=>`
+          <li>
+            <a class="link" href="${l.url}" target="_blank" rel="noopener noreferrer">${l.label}</a>
+            <span class="badge">öffnet extern</span>
+          </li>
+        `).join("")}
+      </ul>
+      <div class="note">Hinweis: Links öffnen in einem neuen Tab.</div>
+    `;
+
+  content.innerHTML = `
+    <div class="mediaRow">
+      <div class="mediaLinks">
+        <p><b>${title}:</b> ${text || "—"}</p>
+        ${linksHtml}
+      </div>
+
+      <div class="mediaCover">
+        <img
+          src="${coverSrc}"
+          alt="${coverAlt}"
+          onerror="this.outerHTML='<div class=&quot;missing&quot;>Cover nicht vorhanden</div>'"
+        >
+      </div>
+    </div>
+  `;
+}
+
+function renderFilmQr(qr){
+  if(!qr?.film?.src) return "";
+  return `
+    <div class="qr-section" style="margin-top:18px">
+      <div class="qr-item">
+        <img class="qr-img" src="${qr.film.src}" alt="QR Film">
+        <div class="qr-label">${qr.film.label}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMusicQr(qr){
+  if(!qr?.music?.src) return "";
+  return `
+    <div class="qr-section" style="margin-top:18px">
+      <div class="qr-item">
+        <img class="qr-img" src="${qr.music.src}" alt="QR Musik">
+        <div class="qr-label">${qr.music.label}</div>
+      </div>
+    </div>
+  `;
+}
+
+
+// Prüft, ob eine Bilddatei erreichbar ist (onload/onerror)
+function imageExists(url){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url + (url.includes("?") ? "&" : "?") + "v=" + Date.now(); // Cache-bust
+  });
+}
+
+// Pro Kategorie: "mindestens 1 Bild existiert?"
+async function hasAnyImage(urls){
+  const results = await Promise.all(urls.map(imageExists));
+  return results.some(Boolean);
+}
+
+// Cover existiert?
+function coverPath(year, cat){
+  // cat ist "film" oder "music"
+  return `img/${year}/${cat}/${cat}_01.jpg`;
+}
+
+// Ermittelt, welche Kategorien im aktuellen Jahr wirklich Content haben
+async function getAvailability(year, d){
+  const hasPersonal = await hasAnyImage([
+    `img/${year}/personal/personal_01.jpg`,
+    `img/${year}/personal/personal_02.jpg`,
+  ]);
+
+  const hasFamily = await hasAnyImage([
+    `img/${year}/family/family_01.jpg`,
+    `img/${year}/family/family_02.jpg`,
+  ]);
+
+  const hasSport = await hasAnyImage([
+    `img/${year}/sport/sport_01.jpg`,
+    `img/${year}/sport/sport_02.jpg`,
+  ]);
+
+  const hasFilmCover  = await imageExists(coverPath(year, "film"));
+  const hasMusicCover = await imageExists(coverPath(year, "music"));
+
+  return {
+    personal: hasPersonal,
+    family:   hasFamily,
+    sport:    hasSport,
+    film:     hasFilmCover,   // nach deiner Regel: Tag/Icon nur wenn Bild existiert
+    music:    hasMusicCover,  // nach deiner Regel: Tag/Icon nur wenn Bild existiert
+  };
+}
+
+// Buttons im Catbar markieren (Punkt + Highlight)
+function applyAvailabilityToButtons(av){
+  document.querySelectorAll(".catbtn").forEach(btn=>{
+    const cat = btn.dataset.cat;
+    if(cat === "overview") return;
+
+    const ok = !!av[cat];
+    btn.classList.toggle("hasContent", ok);
+
+    // Punkt nur einmal anfügen
+    let dot = btn.querySelector(".availDot");
+    if(ok){
+      if(!dot){
+        dot = document.createElement("span");
+        dot.className = "availDot";
+        dot.textContent = "●";
+        btn.appendChild(dot);
+      }
+    }else{
+      if(dot) dot.remove();
+    }
+  });
+}
+
+/* ===========================
+   TAGS nur für Overview-Seite
+   =========================== */
+const TAG_DEFS = [
+  { cat: "personal", label: "🧍 Ganz privat",      textKey: "personalText", linksKey: null },
+  { cat: "family",   label: "👨‍👩‍👦 Family & Friends", textKey: "familyText",   linksKey: null },
+  { cat: "sport",    label: "🏀⚽ Freizeit",       textKey: "sportText",    linksKey: null },
+  { cat: "film",     label: "🎬 Film/Serie",      textKey: "filmText",     linksKey: "filmLinks" },
+  { cat: "music",    label: "🎵 Musik",           textKey: "musicText",    linksKey: "musicLinks" },
+];
+
+function hasCategoryContent(d, def){
+  // Regel: Kategorie gilt als "vorhanden", wenn Text nicht "—" ist ODER Links vorhanden sind
+  const text = (d?.[def.textKey] ?? "").trim();
+  const hasText = text !== "" && text !== "—";
+
+  const links = def.linksKey ? (d?.[def.linksKey] ?? []) : [];
+  const hasLinks = Array.isArray(links) && links.length > 0;
+
+  return hasText || hasLinks;
+}
+
+function renderOverviewTags(d){
+  const available = TAG_DEFS.filter(def => hasCategoryContent(d, def));
+  if(available.length === 0) return "";
+
+  return `
+    <div class="tags" style="margin:10px 0 6px">
+      ${available.map(def => `<span class="tag">${def.label}</span>`).join("")}
+    </div>
+  `;
+}
+
+async function coverExists(year, type){
+  const src = `img/${year}/${type}/${type}_01.jpg`;
+  return await new Promise(resolve=>{
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = src + "?v=" + Date.now(); // Cache-Bust
+  });
+}
+
+
+function renderCategory(cat){
+  const d = data[currentYear] || {};
+if(cat === "overview"){
+  leftTitle.textContent = "Was war da los?";
+
+  content.innerHTML = `
+    <ul>
+      <li><b>Ganz privat:</b> ${d.personalText || "—"}</li>
+      <li><b>Family & Friends:</b> ${d.familyText || "—"}</li>
+      <li><b>Freizeit:</b> ${d.sportText || "—"}</li>
+
+      <li>
+        <b>Film / Serie:</b> ${d.filmText || "—"}
+        <span id="ovFilmIcon"
+      class="miniIcon"
+      style="display:none"
+      onclick="event.stopPropagation(); gotoCat('film')">🎬</span>
+      </li>
+
+      <li>
+        <b>Musik:</b> ${d.musicText || "—"}
+        <span id="ovMusicIcon"
+      class="miniIcon"
+      style="display:none"
+      onclick="event.stopPropagation(); gotoCat('music')">🎵</span>
+      </li>
+    </ul>
+  `;
+
+  // 👇 GENAU HIER: direkt NACH dem content.innerHTML
+  renderOverviewIcons(window.__avail || {});
+
+  return;
+}
+
+
+  if(cat === "personal") return renderGallery("Ganz privat", d.personalText, d.personalImages);
+  if(cat === "family")   return renderGallery("Family & Friends", d.familyText, d.familyImages); // nur hier, wie gewünscht
+  if(cat === "sport")    return renderGallery("Freizeit", d.sportText, d.sportImages);
+if(cat === "film"){
+  renderMediaLinks(
+    "Film / Serie",
+    d.filmText,
+    d.filmLinks,
+    `img/${currentYear}/film/film_01.jpg`,
+    `Film-Cover ${currentYear}`
+  );
+
+  content.insertAdjacentHTML("beforeend", renderFilmQr(d.qrCodes));
+  return;
+}
+
+
+if(cat === "music"){
+  renderMediaLinks(
+    "Musik",
+    d.musicText,
+    d.musicLinks,
+    `img/${currentYear}/music/music_01.jpg`,
+    `Musik-Cover ${currentYear}`
+  );
+
+  content.insertAdjacentHTML("beforeend", renderMusicQr(d.qrCodes));
+  return;
+}
+}
+
+overlay.addEventListener("click",(e)=>{ if(e.target === overlay) closeO(); });
+
+
+/* Öffnen mit kompletter Bilderliste */
+function openLBFromGallery(startIndex){
+  lbImages = currentGalleryImages;
+  lbIndex = startIndex;
+  showLB();
+  lightbox.classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function showLB(){
+  const item = lbImages[lbIndex];
+  lbImg.src = item.src;
+  lbCap.textContent = item.caption || "";
+}
+
+function closeLB(){
+  lightbox.classList.remove("show");
+  document.body.style.overflow = "hidden"; // bleibt gesperrt, solange Jahresoverlay offen ist
+}
+
+/* Navigation */
+function prevLB(){
+  lbIndex = (lbIndex - 1 + lbImages.length) % lbImages.length;
+  showLB();
+}
+function nextLB(){
+  lbIndex = (lbIndex + 1) % lbImages.length;
+  showLB();
+}
+
+/* Klick außerhalb schließt */
+lightbox.addEventListener("click",(e)=>{
+  if(e.target === lightbox) closeLB();
+});
+
+/* Tastatur (Desktop) */
+document.addEventListener("keydown",(e)=>{
+  if(!lightbox.classList.contains("show")) return;
+  if(e.key === "ArrowLeft") prevLB();
+  if(e.key === "ArrowRight") nextLB();
+  if(e.key === "Escape") closeLB();
+});
+
+/* Touch Swipe (Mobile) */
+let startX = 0;
+lbImg.addEventListener("touchstart",(e)=>{
+  startX = e.touches[0].clientX;
+},{passive:true});
+
+lbImg.addEventListener("touchend",(e)=>{
+  const endX = e.changedTouches[0].clientX;
+  const diff = endX - startX;
+  if(Math.abs(diff) > 40){
+    diff > 0 ? prevLB() : nextLB();
+  }
+});
+
+</script>
+<!-- ===== Swipe Lightbox ===== -->
+<div class="overlay" id="lightbox" aria-hidden="true">
+  <div class="panel" style="max-width:1100px;">
+    <div class="top">
+      <div id="lbCap" style="font-size:14px;color:var(--muted)"></div>
+      <div class="close" onclick="closeLB()">Schließen ✕</div>
+    </div>
+
+    <div class="lbWrap">
+      <button class="nav prev" onclick="prevLB()">‹</button>
+      <img id="lbImg" alt="">
+      <button class="nav next" onclick="nextLB()">›</button>
+    </div>
+  </div>
+</div>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+</script>
+
+</body>
+</html>
+
