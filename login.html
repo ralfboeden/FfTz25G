@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <!doctype html>
 <html lang="de">
 <head>
@@ -70,6 +69,8 @@ body{
   gap:10px;
   width:min(420px, calc(100vw - 36px));
 }
+.header{ z-index: 10; }
+.loginDock{ z-index: 20; }
 
 /* Zeile für Input + Button */
 .row{
@@ -143,7 +144,8 @@ kbd{
     width:calc(100% - 32px);   /* volle mobile Breite mit Rand */
     max-width:360px;
   }
-
+  .header{ z-index: 10; }
+  .loginDock{ z-index: 20; }
   input{
     width:100%;
   }
@@ -151,14 +153,6 @@ kbd{
   .row{
     justify-content:flex-start;
   }
-}
-
-.installHint{
-  padding:12px 14px;
-  border-radius:14px;
-  background:rgba(255,255,255,0.04);
-  border:1px solid var(--line);
-  color:var(--muted);
 }
 
 </style>
@@ -175,14 +169,6 @@ kbd{
     <br>Bitte Passwort eingeben, um das Fotobuch zu öffnen.
     </p>
   </div>
-
-<div class="installHint" id="installHint" style="display:none;margin-top:12px;padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:14px;color:#aab2c0;background:rgba(255,255,255,.04);">
-  <b style="color:#e9ecf1">Als App installieren:</b>
-  <div style="margin-top:6px;line-height:1.35">
-    <div><b>Android (Chrome):</b> Menü ⋮ → <i>„App installieren“</i> / <i>„Zum Startbildschirm“</i></div>
-    <div><b>iPhone (Safari):</b> Teilen ⤴ → <i>„Zum Home-Bildschirm“</i></div>
-  </div>
-</div>
 
   <div class="loginDock">
     <div class="installHint" id="installHint" style="display:none;">
@@ -272,278 +258,3 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
-=======
-<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<title>Zugriff geschützt</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-:root{
-  --bg:#0b0d12;
-  --panel:rgba(18,22,34,.78);
-  --line:rgba(255,255,255,.16);
-  --text:#e9ecf1;
-  --muted:#aab2c0;
-}
-
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  min-height:100vh;
-  background:
-    linear-gradient(rgba(11,13,18,.55), rgba(11,13,18,.88)),
-    url("login-bg.jpg") center/cover no-repeat fixed;
-  color:var(--text);
-  overflow:hidden;
-}
-
-/* ===== Übergangsanimation (beim Login) ===== */
-#page{
-  min-height:100vh;
-  transition: opacity .35s ease, transform .35s ease;
-}
-#page.leaving{
-  opacity:0;
-  transform: scale(.985);
-}
-
-/* ===== Optional: dezenter Titel oben links ===== */
-.header{
-  position:fixed;
-  top:18px;
-  left:18px;
-  max-width:min(540px, calc(100vw - 36px));
-  padding:14px 16px;
-  border-radius:16px;
-  background:var(--panel);
-  border:1px solid var(--line);
-  backdrop-filter: blur(6px);
-}
-.header h1{margin:0 0 6px;font-size:18px}
-.header p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
-
-/* ===== Login unten links ===== */
-.loginDock{
-  max-height: calc(100vh - 36px);
-  overflow: auto;
-  position:fixed;
-  left:18px;
-  bottom:18px;
-  padding:14px 14px 12px;
-  border-radius:16px;
-  background:var(--panel);
-  border:1px solid var(--line);
-  backdrop-filter: blur(6px);
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  width:min(420px, calc(100vw - 36px));
-}
-
-/* Zeile für Input + Button */
-.row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-
-/* Passwortfeld halb so groß */
-input{
-  width:200px;            /* ≈ halb so groß */
-  max-width:60vw;         /* mobil: nicht zu breit */
-  padding:10px 10px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:rgba(15,19,32,.85);
-  color:#fff;
-  font-size:15px;
-  outline:none;
-}
-input::placeholder{color:rgba(170,178,192,.9)}
-
-button{
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.08);
-  color:var(--text);
-  font-size:15px;
-  cursor:pointer;
-}
-button:hover{background:rgba(255,255,255,.12)}
-
-.error{
-  color:#ff6b6b;
-  display:none;
-  font-size:13px;
-}
-.hint{
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.35;
-}
-
-/* Kleine UX: Enter-Taste */
-kbd{
-  font-family:inherit;
-  font-size:12px;
-  border:1px solid var(--line);
-  border-radius:8px;
-  padding:2px 6px;
-  color:var(--muted);
-}
-
-@media (max-width:520px){
-  .header{
-    z-index: 10;
-    left:50%;
-    transform:translateX(-50%);
-    right:auto;
-    text-align:center;
-  }
-
-  /* Login unten links (auch mobil) */
-  .loginDock{
-    z-index: 20;
-    left:16px;
-    bottom:16px;
-    transform:none;
-    width:calc(100% - 32px);   /* volle mobile Breite mit Rand */
-    max-width:360px;
-  }
-
-  input{
-    width:100%;
-  }
-
-  .row{
-    justify-content:flex-start;
-  }
-}
-
-.installHint{
-  padding:12px 14px;
-  border-radius:14px;
-  background:rgba(255,255,255,0.04);
-  border:1px solid var(--line);
-  color:var(--muted);
-}
-
-</style>
-</head>
-
-<body>
-<div id="page">
-  <div class="header">
-    <h1><b>Lieber Tjark</b>
-    <br>
-    <br>Zu Deinem 25. eine kleine Reise durch Erinnerungen,<br>Jahr für Jahr.</h1>
-    <p>
-     
-    <br>Bitte Passwort eingeben, um das Fotobuch zu öffnen.
-    </p>
-  </div>
-
-<div class="installHint" id="installHint" style="display:none;margin-top:12px;padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:14px;color:#aab2c0;background:rgba(255,255,255,.04);">
-  <b style="color:#e9ecf1">Als App installieren:</b>
-  <div style="margin-top:6px;line-height:1.35">
-    <div><b>Android (Chrome):</b> Menü ⋮ → <i>„App installieren“</i> / <i>„Zum Startbildschirm“</i></div>
-    <div><b>iPhone (Safari):</b> Teilen ⤴ → <i>„Zum Home-Bildschirm“</i></div>
-  </div>
-</div>
-
-  <div class="loginDock">
-    <div class="installHint" id="installHint" style="display:none;">
-    <b style="color:var(--text)">Als App installieren:</b>
-    <div style="margin-top:6px;line-height:1.35">
-      <div><b>Android (Chrome):</b> Menü ⋮ → <i>„App installieren“</i> / <i>„Zum Startbildschirm“</i></div>
-      <div><b>iPhone (Safari):</b> Teilen ⤴ → <i>„Zum Home-Bildschirm“</i></div>
-    </div>
-  </div>
-
-    <div class="row">
-      <input type="password" id="pw" placeholder="Passwort" autocomplete="current-password">
-      <button id="goBtn" type="button">Öffnen</button>
-    </div>
-
-  <div class="error" id="err">❌ Falsches Passwort</div>
-
-    <div class="hint">
-      Tipp: Mit <kbd>Enter</kbd> bestätigen. (Groß-/Kleinschreibung beachten)
-    </div>
-  </div>
-</div>
-
-<script>
-/* 🔐 HIER dein Passwort festlegen */
-const PASSWORD = "25Geburtstag!";
-
-/* Zielseite */
-const TARGET = "index.html";
-
-/* Schon eingeloggt? */
-if (localStorage.getItem("fotobuch_access") === "ok") {
-  window.location.replace(TARGET);
-}
-
-const page = document.getElementById("page");
-const pw = document.getElementById("pw");
-const err = document.getElementById("err");
-const goBtn = document.getElementById("goBtn");
-
-function doLogin(){
-  err.style.display = "none";
-
-  if (pw.value === PASSWORD) {
-    localStorage.setItem("fotobuch_access","ok");
-
-    // ✅ Übergangsanimation (kurz)
-    page.classList.add("leaving");
-
-    // nach Animation weiterleiten
-    setTimeout(() => {
-      window.location.replace(TARGET);
-    }, 320);
-  } else {
-    err.style.display = "block";
-    pw.focus();
-    pw.select();
-  }
-}
-
-goBtn.addEventListener("click", doLogin);
-pw.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") doLogin();
-});
-</script>
-
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js");
-}
-</script>
-<script>
-(function(){
-  const hint = document.getElementById("installHint");
-  if(!hint) return;
-
-  // Wenn als App gestartet: keinen Hinweis
-  const isStandalone =
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true; // iOS Safari
-
-  if (isStandalone) return;
-
-  hint.style.display = "block";
-})();
-</script>
-
-</body>
-</html>
->>>>>>> 2c83634 (Fix: Install-Hinweis sichtbar und nutzbar)

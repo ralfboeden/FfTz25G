@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const APP_SHELL_CACHE = `fotobuch-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE   = `fotobuch-runtime-${CACHE_VERSION}`;
 
